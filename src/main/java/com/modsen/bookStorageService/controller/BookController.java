@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -65,11 +64,11 @@ public class BookController {
 
     @GetMapping("/id/{id}")
     public List<Book> getBooksByIds(@PathVariable Long id) {
-        return bookService.getBooksByIds(Collections.singleton(id));
+        return bookService.getBooksByIds(id);
     }
 
     @GetMapping("/isbn/{isbn}")
     public Book getUserByIsbn(@PathVariable String isbn) {
-        return bookService.getUserByIsbn(isbn); // Обработка GET-запроса
+        return bookService.getBookByIsbn(isbn);
     }
 }

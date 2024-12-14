@@ -1,13 +1,14 @@
 package com.modsen.bookStorageService.service;
 
 import com.modsen.bookStorageService.dto.BookDTO;
+import com.modsen.bookStorageService.exceptions.BusinessException;
 import com.modsen.bookStorageService.models.Book;
 import com.modsen.bookStorageService.repository.BookRepository;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -22,6 +23,9 @@ public class BookService {
 
 
     public BookDTO create(BookDTO dto) {
+        if (bookRepository.findByIsbn(dto.isbn()).isPresent()) {
+            throw new BusinessException("A book with the same ISBN already exists: " + dto.isbn());
+        }
         Book book = Book.builder()
                 .isbn(dto.isbn())
                 .title(dto.title())
@@ -60,13 +64,18 @@ public class BookService {
         return null;
     }
 
-    public List<Book> getBooksByIds(Iterable<Long> id) {
-        return bookRepository.findAllById(id);
+    public List<Book> getBooksByIds(Long id) {
+        if (bookRepository.findById(id).isEmpty()) {
+            throw new BusinessException("Book not found with id: " + id);
+        }
+        return bookRepository.findAllById(Collections.singleton(id));
     }
 
-    public Book getUserByIsbn(String isbn) {
+    public Book getBookByIsbn(String isbn) {
         return bookRepository.findByIsbn(isbn)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found with ISBN: " + isbn));    }
+                .orElseThrow(() -> new BusinessException("Book not found with ISBN: " + isbn));
+    }
+
 
     public void takeBook(Long id) {
         kafkaProducerService.sendBookStatusUpdate(id.toString(), "take");
