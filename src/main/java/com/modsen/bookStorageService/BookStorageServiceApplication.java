@@ -1,4 +1,4 @@
-package com.modsen.book_storage_service;
+package com.modsen.bookStorageService;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,6 +1,6 @@
-package com.modsen.book_storage_service.repository;
+package com.modsen.bookStorageService.repository;
 
-import com.modsen.book_storage_service.models.User;
+import com.modsen.bookStorageService.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, Long> {

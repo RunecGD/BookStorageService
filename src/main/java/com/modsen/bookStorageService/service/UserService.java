@@ -1,9 +1,8 @@
-package com.modsen.book_storage_service.service;
+package com.modsen.bookStorageService.service;
 
-import com.modsen.book_storage_service.dto.UserDTO;
-import com.modsen.book_storage_service.models.User;
-import com.modsen.book_storage_service.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.modsen.bookStorageService.dto.UserDTO;
+import com.modsen.bookStorageService.models.User;
+import com.modsen.bookStorageService.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +11,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -20,8 +18,8 @@ public class UserService {
 
     public User register(UserDTO userDTO) {
         User user = new User();
-        user.setUsername(userDTO.getUsername());
-        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        user.setUsername(userDTO.username());
+        user.setPassword(passwordEncoder.encode(userDTO.password()));
         return userRepository.save(user);
     }
 

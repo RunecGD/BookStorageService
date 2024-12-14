@@ -1,6 +1,6 @@
-package com.modsen.book_storage_service.filter;
+package com.modsen.bookStorageService.filter;
 
-import com.modsen.book_storage_service.utils.JwtUtil;
+import com.modsen.bookStorageService.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,12 +17,12 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-@Component // Помечаем класс как компонент Spring
+@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
 
-    @Autowired
     public JwtAuthenticationFilter(UserDetailsService userDetailsService, JwtUtil jwtUtil) {
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
@@ -38,13 +38,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String username = null;
         String jwt = null;
 
-        // Проверяем наличие токена
+
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7);// Извлекаем токен
-            username = jwtUtil.extractUsername(jwt);// Извлекаем имя пользователя из токена
+            jwt = authorizationHeader.substring(7);
+            username = jwtUtil.extractUsername(jwt);
         }
 
-        // Если токен действителен, устанавливаем контекст безопасности
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
             UsernamePasswordAuthenticationToken authenticationToken =
@@ -53,6 +52,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         }
 
-        filterChain.doFilter(request, response); // Продолжаем цепочку фильтров
+        filterChain.doFilter(request, response);
     }
 }

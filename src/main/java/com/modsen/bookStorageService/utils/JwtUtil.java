@@ -1,18 +1,20 @@
-package com.modsen.book_storage_service.utils;
+package com.modsen.bookStorageService.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import java.util.Date;
 
 @Component
 public class JwtUtil {
-    private String secretKey = "+K2d33f/4VafYLVyb4UfmK1n36ObMX8pL4JxNaAZKOc="; // Замените на ваш ключ
-    private long validity = 3600000; // 1 час
+
+    @Value("${jwt.secretKey}")
+    private String secretKey;
 
     public String generateToken(String username) {
+        long validity = 3600000;
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
@@ -21,16 +23,15 @@ public class JwtUtil {
                 .compact();
     }
 
-
     public String extractUsername(String token) {
         return extractAllClaims(token).getSubject();
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
+        return Jwts.parser()
+                .setSigningKey(secretKey)
+                .parseClaimsJws(token)
+                .getBody();
     }
 
-    private boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(new Date());
-    }
 }
