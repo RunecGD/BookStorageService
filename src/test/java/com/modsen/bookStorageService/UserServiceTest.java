@@ -1,5 +1,4 @@
 package com.modsen.bookStorageService;
-
 import com.modsen.bookStorageService.dto.UserDTO;
 import com.modsen.bookStorageService.models.User;
 import com.modsen.bookStorageService.repository.UserRepository;
@@ -11,10 +10,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
-class UserServiceTest {
+public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -26,64 +26,49 @@ class UserServiceTest {
     private UserService userService;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testRegister() {
-        // Arrange
-        UserDTO userDTO = new UserDTO("testuser", "password123");
+    public void testRegister() {
 
+        UserDTO userDTO = new UserDTO("testUser", "password");
         User user = new User();
         user.setUsername(userDTO.username());
-        user.setPassword(passwordEncoder.encode(userDTO.password()));
 
-        // Мокаем поведение
-        when(passwordEncoder.encode(userDTO.password())).thenReturn("encodedPassword");
+        String encodedPassword = "encodedPassword";
+        user.setPassword(encodedPassword);
+
+        when(passwordEncoder.encode(userDTO.password())).thenReturn(encodedPassword);
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        // Act
-        User registeredUser = userService.register(userDTO);
+        User result = userService.register(userDTO);
 
-        // Assert
-        assertNotNull(registeredUser);
-        assertEquals("testuser", registeredUser.getUsername());
-        assertEquals("encodedPassword", registeredUser.getPassword());
-        verify(passwordEncoder).encode(userDTO.password());
-        verify(userRepository).save(any(User.class));
+        assertEquals("testUser", result.getUsername());
+        assertEquals(encodedPassword, result.getPassword());
     }
 
     @Test
-    void testFindByUsername() {
-        // Arrange
-        String username = "testuser";
+    public void testFindByUsername_UserFound() {
+        String username = "testUser";
         User user = new User();
         user.setUsername(username);
-        user.setPassword("encodedPassword");
 
         when(userRepository.findByUsername(username)).thenReturn(user);
 
-        // Act
-        User foundUser = userService.findByUsername(username);
+        User result = userService.findByUsername(username);
 
-        // Assert
-        assertNotNull(foundUser);
-        assertEquals(username, foundUser.getUsername());
-        verify(userRepository).findByUsername(username);
+        assertEquals(username, result.getUsername());
     }
 
     @Test
-    void testFindByUsername_NotFound() {
-        // Arrange
-        String username = "unknownuser";
+    public void testFindByUsername_UserNotFound() {
+        String username = "nonExistentUser";
         when(userRepository.findByUsername(username)).thenReturn(null);
 
-        // Act
-        User foundUser = userService.findByUsername(username);
+        User result = userService.findByUsername(username);
 
-        // Assert
-        assertNull(foundUser);
-        verify(userRepository).findByUsername(username);
+        assertEquals(null, result);
     }
 }

@@ -4,38 +4,30 @@ import com.modsen.bookStorageService.service.KafkaProducerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-class KafkaProducerServiceTest {
+public class KafkaProducerServiceTest {
 
-    @Mock
     private KafkaTemplate<String, String> kafkaTemplate;
-
-    @InjectMocks
     private KafkaProducerService kafkaProducerService;
 
     @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
+    public void setUp() {
+        kafkaTemplate = mock(KafkaTemplate.class);
+        kafkaProducerService = new KafkaProducerService(kafkaTemplate);
     }
 
     @Test
-    void testSendBookStatusUpdate() {
-        // Arrange
+    public void testSendBookStatusUpdate() {
         String bookId = "1";
         String action = "create";
+        String expectedMessage = "{\"action\":\"create\", \"bookId\":\"1\"}";
 
-        // Act
         kafkaProducerService.sendBookStatusUpdate(bookId, action);
 
-        // Assert
-        String expectedMessage = "{\"action\":\"create\", \"bookId\":\"1\"}";
         ArgumentCaptor<String> topicCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
 

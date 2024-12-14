@@ -1,4 +1,5 @@
 package com.modsen.bookStorageService;
+
 import com.modsen.bookStorageService.models.User;
 import com.modsen.bookStorageService.repository.UserRepository;
 import com.modsen.bookStorageService.service.UserDetailsServiceImpl;
@@ -10,10 +11,11 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
-class UserDetailsServiceImplTest {
+public class UserDetailsServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
@@ -22,39 +24,34 @@ class UserDetailsServiceImplTest {
     private UserDetailsServiceImpl userDetailsService;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testLoadUserByUsername_UserFound() {
-        // Arrange
-        String username = "testuser";
+    public void testLoadUserByUsername_UserFound() {
+        String username = "testUser";
         User user = new User();
         user.setUsername(username);
-        user.setPassword("password123");
+        user.setPassword("password");
 
         when(userRepository.findByUsername(username)).thenReturn(user);
 
-        // Act
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        // Assert
-        assertNotNull(userDetails);
         assertEquals(username, userDetails.getUsername());
-        assertEquals("password123", userDetails.getPassword());
-        assertTrue(userDetails.getAuthorities().stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_USER")));
+        assertEquals("password", userDetails.getPassword());
+        assertEquals("ROLE_USER", userDetails.getAuthorities().iterator().next().getAuthority());
     }
 
     @Test
-    void testLoadUserByUsername_UserNotFound() {
-        // Arrange
-        String username = "unknownuser";
+    public void testLoadUserByUsername_UserNotFound() {
+        String username = "nonExistentUser";
         when(userRepository.findByUsername(username)).thenReturn(null);
 
-        // Act & Assert
-        assertThrows(UsernameNotFoundException.class, () -> {
+        UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, () -> {
             userDetailsService.loadUserByUsername(username);
         });
+        assertEquals("User not found", exception.getMessage());
     }
 }
