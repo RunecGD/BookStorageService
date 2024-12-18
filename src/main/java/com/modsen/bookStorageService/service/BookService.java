@@ -85,11 +85,11 @@ public class BookService {
                 .orElseThrow(() -> new BusinessException("Book not found with ISBN: " + isbn));
     }
 
-    public String getBookStatusFromExternalApi(String bookId) {
+    public String getBookStatusFromExternalApi(String bookId, String username) {
         String url = "http://localhost:8082/api/book-status/" + bookId;
 
         HttpHeaders headers = new HttpHeaders();
-        String token = jwtUtil.generateToken("Herman");
+        String token = jwtUtil.generateToken(username);
         headers.set("Authorization", "Bearer " + token); // Устанавливаем Bearer токен
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -100,15 +100,15 @@ public class BookService {
         }
     }
 
-    public void takeBook(Long id) {
-        if (getBookStatusFromExternalApi(id.toString()).equals("\"CHECKED_OUT\"")) {
+    public void takeBook(Long id, String username) {
+        if (getBookStatusFromExternalApi(id.toString(), username).equals("\"CHECKED_OUT\"")) {
             throw new BusinessException("The book is already taken or the book does not exist");
         }
         kafkaProducerService.sendBookStatusUpdate(id.toString(), "take");
     }
 
-    public void returnBook(Long id) {
-        if (getBookStatusFromExternalApi(id.toString()).equals("\"AVAILABLE\"")) {
+    public void returnBook(Long id, String username) {
+        if (getBookStatusFromExternalApi(id.toString(), username).equals("\"AVAILABLE\"")) {
             throw new BusinessException("The book is not occupied by anyone");
         }
         kafkaProducerService.sendBookStatusUpdate(id.toString(), "return");

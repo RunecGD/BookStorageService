@@ -1,6 +1,7 @@
 package com.modsen.bookStorageService.controller;
 
 import com.modsen.bookStorageService.dto.BookDTO;
+import com.modsen.bookStorageService.dto.UserDTO;
 import com.modsen.bookStorageService.models.Book;
 import com.modsen.bookStorageService.service.BookService;
 import jakarta.transaction.Transactional;
@@ -8,14 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -51,15 +45,15 @@ public class BookController {
 
     @PutMapping("/take/{id}")
     @Transactional
-    public HttpStatus takeBook(@PathVariable Long id) {
-        bookService.takeBook(id);
+    public HttpStatus takeBook(@PathVariable Long id, @RequestBody UserDTO dto) {
+        bookService.takeBook(id, dto.username());
         return HttpStatus.OK;
     }
 
     @PutMapping("/return/{id}")
     @Transactional
-    public HttpStatus returnBook(@PathVariable Long id) {
-        bookService.returnBook(id);
+    public HttpStatus returnBook(@PathVariable Long id, @RequestBody UserDTO dto) {
+        bookService.returnBook(id, dto.username());
         return HttpStatus.OK;
     }
 
