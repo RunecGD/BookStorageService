@@ -56,7 +56,8 @@ public class BookService {
                 book.getTitle(),
                 book.getGenre(),
                 book.getDescription(),
-                book.getAuthor());
+                book.getAuthor()
+        );
     }
 
     public Page<Book> readAll(Pageable pageable) {
@@ -90,13 +91,13 @@ public class BookService {
 
         HttpHeaders headers = new HttpHeaders();
         String token = jwtUtil.generateToken(username);
-        headers.set("Authorization", "Bearer " + token); // Устанавливаем Bearer токен
+        headers.set("Authorization", "Bearer " + token);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         try {
             return restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
         } catch (Exception e) {
-            throw new RuntimeException("Ошибка при получении статуса книги: " + e.getMessage());
+            throw new RuntimeException("Error when receiving book" + e.getMessage());
         }
     }
 
