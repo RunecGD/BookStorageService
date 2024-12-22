@@ -1,6 +1,6 @@
 package com.modsen.bookStorageService.service;
 
-import com.modsen.bookStorageService.models.User;
+import com.modsen.bookStorageService.model.User;
 import com.modsen.bookStorageService.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

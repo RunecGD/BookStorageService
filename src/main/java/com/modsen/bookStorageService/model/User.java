@@ -1,35 +1,28 @@
-package com.modsen.bookStorageService.models;
+package com.modsen.bookStorageService.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jdk.jfr.Enabled;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Enabled
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Book {
+public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
-    private String isbn;
+    @Column(unique = true, nullable = false)
+    private String username;
 
-    private String title;
-    private String genre;
-    private String description;
-    private String author;
-
+    @Column(nullable = false)
+    private String password;
 }

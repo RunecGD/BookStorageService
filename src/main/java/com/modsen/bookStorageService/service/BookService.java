@@ -1,20 +1,22 @@
 package com.modsen.bookStorageService.service;
 
-import com.modsen.bookStorageService.dto.BookDTO;
-import com.modsen.bookStorageService.exceptions.BusinessException;
-import com.modsen.bookStorageService.models.Book;
+import com.modsen.bookStorageService.dto.BookDto;
+import com.modsen.bookStorageService.exception.BookAlreadyTakenException;
+import com.modsen.bookStorageService.exception.BookNotFoundException;
+import com.modsen.bookStorageService.exception.BookNotTakenException;
+import com.modsen.bookStorageService.exception.ISBNAlreadyExistsException;
+import com.modsen.bookStorageService.model.Book;
 import com.modsen.bookStorageService.repository.BookRepository;
 import com.modsen.bookStorageService.utils.JwtUtil;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Collections;
-import java.util.List;
 
 @Service
 public class BookService {
@@ -31,10 +33,12 @@ public class BookService {
     }
 
 
-    public BookDTO create(BookDTO dto) {
-        if (bookRepository.findByIsbn(dto.isbn()).isPresent()) {
-            throw new BusinessException("A book with the same ISBN already exists: " + dto.isbn());
-        }
+    @Transactional
+    public BookDto create(BookDto dto) {
+        bookRepository.findByIsbn(dto.isbn())
+                .ifPresent(book -> {
+                    throw new ISBNAlreadyExistsException("A book with the same ISBN already exists: " + dto.isbn());
+                });
         Book book = Book.builder()
                 .isbn(dto.isbn())
                 .title(dto.title())
@@ -51,8 +55,8 @@ public class BookService {
         return convertToDTO(savedBook);
     }
 
-    private BookDTO convertToDTO(Book book) {
-        return new BookDTO(book.getIsbn(),
+    private BookDto convertToDTO(Book book) {
+        return new BookDto(book.getIsbn(),
                 book.getTitle(),
                 book.getGenre(),
                 book.getDescription(),
@@ -60,34 +64,52 @@ public class BookService {
         );
     }
 
-    public Page<Book> readAll(Pageable pageable) {
-        return bookRepository.findAll(pageable);
+    public Page<BookDto> readAll(Pageable pageable) {
+        return bookRepository.findAll(pageable).map(this::convertToDTO);
     }
 
-    public Book update(Book book) {
-        return bookRepository.save(book);
+    @Transactional
+    public BookDto update(BookDto dto, Long id) {
+        Book existingBook = bookRepository.findById(id)
+                .orElseThrow(() -> new BookNotFoundException("Book not found with ID: " + id));
+
+        bookRepository.findByIsbn(dto.isbn())
+                .filter(book -> !book.getId().equals(existingBook.getId()))
+                .ifPresent(book -> {
+                    throw new ISBNAlreadyExistsException("A book with the same ISBN already exists: " + dto.isbn());
+                });
+
+        existingBook.setTitle(dto.title());
+        existingBook.setAuthor(dto.author());
+        existingBook.setIsbn(dto.isbn());
+
+        Book updatedBook = bookRepository.save(existingBook);
+        return convertToDTO(updatedBook);
     }
 
-    public List<Book> delete(Long id) {
-        bookRepository.deleteById(id);
-        kafkaProducerService.sendBookStatusUpdate(id.toString(), "delete");
-        return null;
-    }
-
-    public List<Book> getBooksByIds(Long id) {
-        if (bookRepository.findById(id).isEmpty()) {
-            throw new BusinessException("Book not found with id: " + id);
+    @Transactional
+    public ResponseEntity<String> delete(Long id) {
+        if (!bookRepository.existsById(id)) {
+            throw new BookNotFoundException("Book not found with ID: " + id);
         }
-        return bookRepository.findAllById(Collections.singleton(id));
+        bookRepository.deleteById(id);
+        return ResponseEntity.ok("Book deleted successfully.");
     }
 
-    public Book getBookByIsbn(String isbn) {
-        return bookRepository.findByIsbn(isbn)
-                .orElseThrow(() -> new BusinessException("Book not found with ISBN: " + isbn));
+    public BookDto getBooksByIds(Long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new BookNotFoundException("Book not found with id: " + id));
+        return convertToDTO(book);
+    }
+
+    public BookDto getBookByIsbn(String isbn) {
+        Book book = bookRepository.findByIsbn(isbn)
+                .orElseThrow(() -> new BookNotFoundException("Book not found with ISBN: " + isbn));
+        return convertToDTO(book);
     }
 
     public String getBookStatusFromExternalApi(String bookId, String username) {
-        String url = "http://localhost:8082/api/book-status/" + bookId;
+        String url = "http://localhost:8082/books/tracker/book-status/" + bookId;
 
         HttpHeaders headers = new HttpHeaders();
         String token = jwtUtil.generateToken(username);
@@ -101,16 +123,18 @@ public class BookService {
         }
     }
 
+    @Transactional
     public void takeBook(Long id, String username) {
         if (getBookStatusFromExternalApi(id.toString(), username).equals("\"CHECKED_OUT\"")) {
-            throw new BusinessException("The book is already taken or the book does not exist");
+            throw new BookAlreadyTakenException("The book is already taken or the book does not exist");
         }
         kafkaProducerService.sendBookStatusUpdate(id.toString(), "take");
     }
 
+    @Transactional
     public void returnBook(Long id, String username) {
         if (getBookStatusFromExternalApi(id.toString(), username).equals("\"AVAILABLE\"")) {
-            throw new BusinessException("The book is not occupied by anyone");
+            throw new BookNotTakenException("The book is not occupied by anyone");
         }
         kafkaProducerService.sendBookStatusUpdate(id.toString(), "return");
     }

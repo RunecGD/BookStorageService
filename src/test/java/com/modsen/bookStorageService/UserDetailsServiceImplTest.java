@@ -1,6 +1,6 @@
 package com.modsen.bookStorageService;
 
-import com.modsen.bookStorageService.models.User;
+import com.modsen.bookStorageService.model.User;
 import com.modsen.bookStorageService.repository.UserRepository;
 import com.modsen.bookStorageService.service.UserDetailsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,9 +49,8 @@ public class UserDetailsServiceImplTest {
         String username = "nonExistentUser";
         when(userRepository.findByUsername(username)).thenReturn(null);
 
-        UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, () -> {
-            userDetailsService.loadUserByUsername(username);
-        });
+        UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, () ->
+                userDetailsService.loadUserByUsername(username));
         assertEquals("User not found", exception.getMessage());
     }
 }
