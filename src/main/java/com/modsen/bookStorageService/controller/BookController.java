@@ -1,6 +1,7 @@
 package com.modsen.bookStorageService.controller;
 
 import com.modsen.bookStorageService.dto.BookDto;
+import com.modsen.bookStorageService.dto.ResponseDto;
 import com.modsen.bookStorageService.dto.UserDto;
 import com.modsen.bookStorageService.service.BookService;
 import org.springframework.data.domain.Page;
@@ -27,37 +28,38 @@ public class BookController {
     }
 
     @PostMapping
-    public ResponseEntity<BookDto> createBook(@RequestBody BookDto bookDTO) {
-        BookDto createdBook = bookService.create(bookDTO);
+    public ResponseEntity<ResponseDto> createBook(@RequestBody BookDto dto) {
+        ResponseDto createdBook = bookService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdBook);
     }
 
     @GetMapping
-    public ResponseEntity<Page<BookDto>> readAll(
+    public ResponseEntity<Page<ResponseDto>> readAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<BookDto> books = bookService.readAll(PageRequest.of(page, size));
-        return new ResponseEntity<>(books, HttpStatus.OK);
+        Page<ResponseDto> books = bookService.readAll(PageRequest.of(page, size));
+        return ResponseEntity.ok(books);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BookDto> update(@PathVariable Long id,
-                                       @RequestBody BookDto dto) {
-        return new ResponseEntity<>(bookService.update(dto, id), HttpStatus.OK);
+    public ResponseEntity<ResponseDto> update(@PathVariable Long id,
+                                              @RequestBody BookDto dto) {
+        ResponseDto updatedBook = bookService.update(dto, id);
+        return ResponseEntity.ok(updatedBook);
     }
 
     @PostMapping("/{id}/take")
-    public HttpStatus takeBook(@PathVariable Long id,
-                               @RequestBody UserDto dto) {
+    public ResponseEntity<String> takeBook(@PathVariable Long id,
+                                           @RequestBody UserDto dto) {
         bookService.takeBook(id, dto.username());
-        return HttpStatus.OK;
+        return ResponseEntity.ok("Book taken successfully.");
     }
 
     @PostMapping("/{id}/return")
-    public HttpStatus returnBook(@PathVariable Long id,
-                                 @RequestBody UserDto dto) {
+    public ResponseEntity<String> returnBook(@PathVariable Long id,
+                                             @RequestBody UserDto dto) {
         bookService.returnBook(id, dto.username());
-        return HttpStatus.OK;
+        return ResponseEntity.ok("Book returned successfully.");
     }
 
     @DeleteMapping("/{id}")
@@ -66,12 +68,12 @@ public class BookController {
     }
 
     @GetMapping("/id/{id}")
-    public BookDto getBooksByIds(@PathVariable Long id) {
+    public ResponseDto getBooksByIds(@PathVariable Long id) {
         return bookService.getBooksByIds(id);
     }
 
     @GetMapping("/isbn/{isbn}")
-    public BookDto getUserByIsbn(@PathVariable String isbn) {
+    public ResponseDto getUserByIsbn(@PathVariable String isbn) {
         return bookService.getBookByIsbn(isbn);
     }
 }

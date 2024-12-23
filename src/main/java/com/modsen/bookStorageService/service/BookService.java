@@ -1,10 +1,12 @@
 package com.modsen.bookStorageService.service;
 
 import com.modsen.bookStorageService.dto.BookDto;
+import com.modsen.bookStorageService.dto.ResponseDto;
 import com.modsen.bookStorageService.exception.BookAlreadyTakenException;
 import com.modsen.bookStorageService.exception.BookNotFoundException;
 import com.modsen.bookStorageService.exception.BookNotTakenException;
 import com.modsen.bookStorageService.exception.ISBNAlreadyExistsException;
+import com.modsen.bookStorageService.mapper.BookMapper;
 import com.modsen.bookStorageService.model.Book;
 import com.modsen.bookStorageService.repository.BookRepository;
 import com.modsen.bookStorageService.utils.JwtUtil;
@@ -34,7 +36,7 @@ public class BookService {
 
 
     @Transactional
-    public BookDto create(BookDto dto) {
+    public ResponseDto create(BookDto dto) {
         bookRepository.findByIsbn(dto.isbn())
                 .ifPresent(book -> {
                     throw new ISBNAlreadyExistsException("A book with the same ISBN already exists: " + dto.isbn());
@@ -52,24 +54,16 @@ public class BookService {
                 .getId()
                 .toString(), "create");
 
-        return convertToDTO(savedBook);
+        return BookMapper.INSTANCE.toDto(savedBook);
     }
 
-    private BookDto convertToDTO(Book book) {
-        return new BookDto(book.getIsbn(),
-                book.getTitle(),
-                book.getGenre(),
-                book.getDescription(),
-                book.getAuthor()
-        );
-    }
-
-    public Page<BookDto> readAll(Pageable pageable) {
-        return bookRepository.findAll(pageable).map(this::convertToDTO);
+    public Page<ResponseDto> readAll(Pageable pageable) {
+        Page<Book> bookPage = bookRepository.findAll(pageable);
+        return BookMapper.INSTANCE.toDtoPage(bookPage);
     }
 
     @Transactional
-    public BookDto update(BookDto dto, Long id) {
+    public ResponseDto update(BookDto dto, Long id) {
         Book existingBook = bookRepository.findById(id)
                 .orElseThrow(() -> new BookNotFoundException("Book not found with ID: " + id));
 
@@ -84,7 +78,7 @@ public class BookService {
         existingBook.setIsbn(dto.isbn());
 
         Book updatedBook = bookRepository.save(existingBook);
-        return convertToDTO(updatedBook);
+        return BookMapper.INSTANCE.toDto(updatedBook);
     }
 
     @Transactional
@@ -96,16 +90,16 @@ public class BookService {
         return ResponseEntity.ok("Book deleted successfully.");
     }
 
-    public BookDto getBooksByIds(Long id) {
+    public ResponseDto getBooksByIds(Long id) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new BookNotFoundException("Book not found with id: " + id));
-        return convertToDTO(book);
+        return BookMapper.INSTANCE.toDto(book);
     }
 
-    public BookDto getBookByIsbn(String isbn) {
+    public ResponseDto getBookByIsbn(String isbn) {
         Book book = bookRepository.findByIsbn(isbn)
                 .orElseThrow(() -> new BookNotFoundException("Book not found with ISBN: " + isbn));
-        return convertToDTO(book);
+        return BookMapper.INSTANCE.toDto(book);
     }
 
     public String getBookStatusFromExternalApi(String bookId, String username) {
