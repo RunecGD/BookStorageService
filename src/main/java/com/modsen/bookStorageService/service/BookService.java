@@ -1,7 +1,7 @@
 package com.modsen.bookStorageService.service;
 
-import com.modsen.bookStorageService.dto.BookDto;
-import com.modsen.bookStorageService.dto.ResponseDto;
+import com.modsen.bookStorageService.dto.BookRequestDto;
+import com.modsen.bookStorageService.dto.BookResponseDto;
 import com.modsen.bookStorageService.exception.BookAlreadyTakenException;
 import com.modsen.bookStorageService.exception.BookNotFoundException;
 import com.modsen.bookStorageService.exception.BookNotTakenException;
@@ -11,6 +11,7 @@ import com.modsen.bookStorageService.model.Book;
 import com.modsen.bookStorageService.repository.BookRepository;
 import com.modsen.bookStorageService.utils.JwtUtil;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
@@ -21,22 +22,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 @Service
+@RequiredArgsConstructor
 public class BookService {
     private final RestTemplate restTemplate;
     private final BookRepository bookRepository;
     private final KafkaProducerService kafkaProducerService;
     private final JwtUtil jwtUtil;
 
-    public BookService(RestTemplate restTemplate, BookRepository bookRepository, KafkaProducerService kafkaProducerService, JwtUtil jwtUtil) {
-        this.restTemplate = restTemplate;
-        this.bookRepository = bookRepository;
-        this.kafkaProducerService = kafkaProducerService;
-        this.jwtUtil = jwtUtil;
-    }
-
-
     @Transactional
-    public ResponseDto create(BookDto dto) {
+    public BookResponseDto create(BookRequestDto dto) {
         bookRepository.findByIsbn(dto.isbn())
                 .ifPresent(book -> {
                     throw new ISBNAlreadyExistsException("A book with the same ISBN already exists: " + dto.isbn());
@@ -57,46 +51,46 @@ public class BookService {
         return BookMapper.INSTANCE.toDto(savedBook);
     }
 
-    public Page<ResponseDto> readAll(Pageable pageable) {
+    public Page<BookResponseDto> readAll(Pageable pageable) {
         Page<Book> bookPage = bookRepository.findAll(pageable);
         return BookMapper.INSTANCE.toDtoPage(bookPage);
     }
 
     @Transactional
-    public ResponseDto update(BookDto dto, Long id) {
-        Book existingBook = bookRepository.findById(id)
+    public BookResponseDto update(BookRequestDto dto, Long id) {
+        Book bookForUpdate = bookRepository.findById(id)
                 .orElseThrow(() -> new BookNotFoundException("Book not found with ID: " + id));
 
         bookRepository.findByIsbn(dto.isbn())
-                .filter(book -> !book.getId().equals(existingBook.getId()))
+                .filter(book -> !book.getId().equals(bookForUpdate.getId()))
                 .ifPresent(book -> {
                     throw new ISBNAlreadyExistsException("A book with the same ISBN already exists: " + dto.isbn());
                 });
 
-        existingBook.setTitle(dto.title());
-        existingBook.setAuthor(dto.author());
-        existingBook.setIsbn(dto.isbn());
+        bookForUpdate.setTitle(dto.title());
+        bookForUpdate.setAuthor(dto.author());
+        bookForUpdate.setIsbn(dto.isbn());
 
-        Book updatedBook = bookRepository.save(existingBook);
-        return BookMapper.INSTANCE.toDto(updatedBook);
+        bookRepository.save(bookForUpdate);
+        return BookMapper.INSTANCE.toDto(bookForUpdate);
     }
 
     @Transactional
-    public ResponseEntity<String> delete(Long id) {
+    public void delete(Long id) {
         if (!bookRepository.existsById(id)) {
             throw new BookNotFoundException("Book not found with ID: " + id);
         }
         bookRepository.deleteById(id);
-        return ResponseEntity.ok("Book deleted successfully.");
+        ResponseEntity.noContent().build();
     }
 
-    public ResponseDto getBooksByIds(Long id) {
+    public BookResponseDto getBooksByIds(Long id) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new BookNotFoundException("Book not found with id: " + id));
         return BookMapper.INSTANCE.toDto(book);
     }
 
-    public ResponseDto getBookByIsbn(String isbn) {
+    public BookResponseDto getBookByIsbn(String isbn) {
         Book book = bookRepository.findByIsbn(isbn)
                 .orElseThrow(() -> new BookNotFoundException("Book not found with ISBN: " + isbn));
         return BookMapper.INSTANCE.toDto(book);
