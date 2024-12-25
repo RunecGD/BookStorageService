@@ -1,6 +1,5 @@
-package com.modsen.bookStorageService;
+package com.modsen.bookStorageService.service;
 
-import com.modsen.bookStorageService.service.KafkaProducerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

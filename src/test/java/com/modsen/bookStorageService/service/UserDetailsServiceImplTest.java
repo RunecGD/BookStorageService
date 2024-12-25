@@ -1,8 +1,7 @@
-package com.modsen.bookStorageService;
+package com.modsen.bookStorageService.service;
 
 import com.modsen.bookStorageService.model.User;
 import com.modsen.bookStorageService.repository.UserRepository;
-import com.modsen.bookStorageService.service.UserDetailsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

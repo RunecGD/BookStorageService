@@ -42,13 +42,13 @@ public class BookService {
                 .description(dto.description())
                 .author(dto.author())
                 .build();
-        Book savedBook = bookRepository.save(book);
+        bookRepository.save(book);
 
-        kafkaProducerService.sendBookStatusUpdate(savedBook
+        kafkaProducerService.sendBookStatusUpdate(book
                 .getId()
                 .toString(), "create");
 
-        return BookMapper.INSTANCE.toDto(savedBook);
+        return BookMapper.INSTANCE.toDto(book);
     }
 
     public Page<BookResponseDto> readAll(Pageable pageable) {
@@ -96,7 +96,7 @@ public class BookService {
         return BookMapper.INSTANCE.toDto(book);
     }
 
-    public String getBookStatusFromExternalApi(String bookId, String username) {
+    public String getBookStatusFromExternalApi(Long bookId, String username) {
         String url = "http://localhost:8082/books/tracker/book-status/" + bookId;
 
         HttpHeaders headers = new HttpHeaders();
@@ -107,13 +107,13 @@ public class BookService {
         try {
             return restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
         } catch (Exception e) {
-            throw new RuntimeException("Error when receiving book" + e.getMessage());
+            throw new BookNotFoundException("Error when receiving book" + e.getMessage());
         }
     }
 
     @Transactional
     public void takeBook(Long id, String username) {
-        if (getBookStatusFromExternalApi(id.toString(), username).equals("\"CHECKED_OUT\"")) {
+        if (getBookStatusFromExternalApi(id, username).equals("\"CHECKED_OUT\"")) {
             throw new BookAlreadyTakenException("The book is already taken or the book does not exist");
         }
         kafkaProducerService.sendBookStatusUpdate(id.toString(), "take");
@@ -121,7 +121,7 @@ public class BookService {
 
     @Transactional
     public void returnBook(Long id, String username) {
-        if (getBookStatusFromExternalApi(id.toString(), username).equals("\"AVAILABLE\"")) {
+        if (getBookStatusFromExternalApi(id, username).equals("\"AVAILABLE\"")) {
             throw new BookNotTakenException("The book is not occupied by anyone");
         }
         kafkaProducerService.sendBookStatusUpdate(id.toString(), "return");

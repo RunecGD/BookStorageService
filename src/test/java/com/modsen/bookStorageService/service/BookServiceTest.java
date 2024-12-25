@@ -1,4 +1,4 @@
-package com.modsen.bookStorageService;
+package com.modsen.bookStorageService.service;
 
 import com.modsen.bookStorageService.dto.BookRequestDto;
 import com.modsen.bookStorageService.dto.BookResponseDto;
@@ -6,8 +6,6 @@ import com.modsen.bookStorageService.exception.BookNotFoundException;
 import com.modsen.bookStorageService.exception.ISBNAlreadyExistsException;
 import com.modsen.bookStorageService.model.Book;
 import com.modsen.bookStorageService.repository.BookRepository;
-import com.modsen.bookStorageService.service.BookService;
-import com.modsen.bookStorageService.service.KafkaProducerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -86,8 +84,20 @@ public class BookServiceTest {
     @Test
     public void testUpdateBook_Success() {
         Long bookId = 1L;
-        BookRequestDto dto = new BookRequestDto(1L, "978-1-56619-909-4", "Updated Title", "Dystopian", "Updated description", "Aldous Huxley");
-        Book existingBook = new Book(bookId, "978-1-56619-909-4", "Old Title", "Dystopian", "Old description", "Aldous Huxley");
+        BookRequestDto dto = new BookRequestDto(1L,
+                "978-1-56619-909-4",
+                "Updated Title",
+                "Dystopian",
+                "Updated description",
+                "Aldous Huxley"
+        );
+        Book existingBook = new Book(bookId,
+                "978-1-56619-909-4",
+                "Old Title",
+                "Dystopian",
+                "Old description",
+                "Aldous Huxley"
+        );
 
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(existingBook));
         when(bookRepository.findByIsbn(dto.isbn())).thenReturn(Optional.empty());
