@@ -12,6 +12,7 @@ import com.modsen.bookStorageService.repository.BookRepository;
 import com.modsen.bookStorageService.utils.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
@@ -81,6 +82,9 @@ public class BookService {
             throw new BookNotFoundException("Book not found with ID: " + id);
         }
         bookRepository.deleteById(id);
+        kafkaProducerService.sendBookStatusUpdate(id
+                .toString(), "delete");
+
         ResponseEntity.noContent().build();
     }
 
@@ -96,8 +100,11 @@ public class BookService {
         return BookMapper.INSTANCE.toDto(book);
     }
 
+    @Value("${external.service.url}")
+    private String serviceUrl;
+
     public String getBookStatusFromExternalApi(Long bookId, String username) {
-        String url = "http://localhost:8082/books/tracker/book-status/" + bookId;
+        String url = serviceUrl + bookId;
 
         HttpHeaders headers = new HttpHeaders();
         String token = jwtUtil.generateToken(username);

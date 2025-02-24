@@ -32,6 +32,7 @@
         <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
         <jaxb.version>2.3.1</jaxb.version>
         <jjwt.version>0.9.1</jjwt.version>
+        <mapstruct.version>1.5.2.Final</mapstruct.version>
     </properties>
     <dependencies>
         <dependency>
@@ -52,7 +53,7 @@
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <version>1.5.2.Final</version> <!-- Убедитесь, что версия актуальна -->
+            <version>${mapstruct.version}</version>
         </dependency>
         <dependency>
             <groupId>org.mapstruct</groupId>
